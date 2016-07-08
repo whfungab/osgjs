@@ -91,7 +91,7 @@ var CanvasStats = function () {
             values: [ 'frame', 'update', 'cull', 'render' ]
         }, {
             caption: 'Scene Graph',
-            values: [ 'pushstateset', 'updatecallback' ]
+            values: [ 'pushstateset', 'updatecallback', 'state.apply' ]
         }, {
             caption: 'Cull',
             values: [ 'cullnode', 'cullmatrixtransform', 'cullgeometry', 'cullcamera', 'culllighsource', 'cullprojection' ]

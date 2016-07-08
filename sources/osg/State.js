@@ -563,6 +563,7 @@ State.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( Objec
     },
 
     apply: function () {
+        this._numApply++;
 
         var lastProgram = this.getLastProgramApplied();
 

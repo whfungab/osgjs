@@ -21,7 +21,7 @@ var ImageObject = function ( image ) {
     this._isGreyscale = undefined;
 };
 
-ImageObject.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( Object.prototype, {
+MACROUTILS.createPrototypeClass( ImageObject, MACROUTILS.objectInherit( Object.prototype, {
 
     dirty: function () {
         this._isGreyscale = undefined;
@@ -231,7 +231,5 @@ ImageObject.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit(
         this._imageObject = undefined;
     }
 } ), 'osg', 'Image' );
-
-MACROUTILS.setTypeID( ImageObject );
 
 module.exports = ImageObject;

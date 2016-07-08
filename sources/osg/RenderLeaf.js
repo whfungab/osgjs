@@ -89,7 +89,6 @@ RenderLeaf.prototype = {
 
         return function ( state ) {
 
-
             var program = state.getLastProgramApplied();
             var programInstanceID = program.getInstanceID();
             var cache = state.getCacheUniformsApplyRenderLeaf();
@@ -201,7 +200,6 @@ RenderLeaf.prototype = {
                 StateGraph.moveStateGraph( state, undefined, curRenderGraphParent );
                 state.applyStateSet( curRenderGraphStateSet );
                 previousHash = state.getStateSetStackHash();
-
             }
 
             this.drawGeometry( state );

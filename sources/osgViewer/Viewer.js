@@ -198,7 +198,7 @@ Viewer.prototype = MACROUTILS.objectInherit( View.prototype, {
     setContextLostCallback: function ( cb ) {
         this._contextLostCallback = cb;
         // just in case callback registration
-        // happens after the context lost 
+        // happens after the context lost
         if ( this._contextLost ) {
             cb();
         }
@@ -248,6 +248,8 @@ Viewer.prototype = MACROUTILS.objectInherit( View.prototype, {
 
     renderingTraversal: function () {
 
+        this.getState()._frameStamp = this._frameStamp;
+
         if ( this.getScene().getSceneData() )
             this.getScene().getSceneData().getBound();
 
@@ -275,6 +277,7 @@ Viewer.prototype = MACROUTILS.objectInherit( View.prototype, {
                 stats.rStats( 'cullgeometry' ).set( cullVisitor._numGeometry );
 
                 stats.rStats( 'pushstateset' ).set( renderer.getState()._numPushStateSet );
+                stats.rStats( 'state.apply' ).set( renderer.getState()._numApply );
             }
 
         }

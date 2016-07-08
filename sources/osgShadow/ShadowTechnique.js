@@ -19,7 +19,7 @@ var ShadowTechnique = function () {
 };
 
 /** @lends ShadowTechnique.prototype */
-ShadowTechnique.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( Object.prototype, {
+MACROUTILS.createPrototypeClass( ShadowTechnique, MACROUTILS.objectInherit( Object.prototype, {
 
     dirty: function () {
         this._dirty = true;
@@ -80,7 +80,5 @@ ShadowTechnique.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInhe
 
 } ), 'osgShadow', 'ShadowTechnique' );
 
-
-MACROUTILS.setTypeID( ShadowTechnique );
 
 module.exports = ShadowTechnique;

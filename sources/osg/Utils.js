@@ -177,6 +177,102 @@ Utils.createPrototypeClass = function ( Constructor, prototype, libraryName, cla
     Utils.setTypeID( Constructor );
 };
 
+
+// ============== Node ID =================================
+Utils.objectNodeType = {};
+Utils.objectNodeType.type = 0;
+Utils.objectNodeType.generate = function ( arg ) {
+    var t = Utils.objectNodeType.type;
+    Utils.objectNodeType[ t ] = arg;
+    Utils.objectNodeType[ arg ] = t;
+    Utils.objectNodeType.type += 1;
+    return t;
+};
+
+Utils.setNodeTypeID = function ( classObject ) {
+    var className = classObject.prototype.libraryClassName();
+    var typeID = Utils.objectNodeType.generate( className );
+    var getTypeID = function () {
+        return typeID;
+    };
+    classObject.nodeTypeID = classObject.prototype.nodeTypeID = typeID;
+    classObject.getNodeTypeID = classObject.prototype.getNodeTypeID = getTypeID;
+};
+
+Utils.createPrototypeNode = function ( Constructor, prototype, libraryName, className ) {
+    Utils.createPrototypeClass( Constructor, prototype, libraryName, className );
+    Utils.setNodeTypeID( Constructor );
+};
+
+// ===============================================
+
+
+var typeMemberIndex = 0;
+var textureTypeMemberIndex = 0;
+var stateAttributeTypeMember = {};
+var textureStateAttributeTypeMember = {};
+var attributeTypeIndex = 0;
+var stateAttributeType = {};
+
+Utils.getStateAttributeTypeNameToTypeId = function () {
+    return stateAttributeType;
+};
+
+Utils.createPrototypeStateAttribute = function ( Constructor, prototype, libraryName, className ) {
+    Utils.createPrototypeClass( Constructor, prototype, libraryName, className );
+    var attributeId = Utils.getOrCreateStateAttributeTypeId( Constructor );
+    Constructor.prototype.attributeTypeId = attributeId;
+};
+
+
+Utils.getOrCreateStateAttributeTypeId = function ( Constructor ) {
+    var attributeTypeName = Constructor.prototype.getType();
+
+    if ( stateAttributeType[ attributeTypeName ] ) return stateAttributeType[ attributeTypeName ];
+
+    var typeId = attributeTypeIndex++;
+    stateAttributeType[ attributeTypeName ] = typeId;
+    return typeId;
+};
+
+Utils.getOrCreateStateAttributeTypeMemberIndex = function ( attribute ) {
+    if ( attribute._attributeTypeIndex >= 0 ) return attribute._attributeTypeIndex;
+    var typeMember = attribute.getTypeMember();
+    var type = stateAttributeTypeMember[ typeMember ];
+    if ( type !== undefined ) {
+        attribute._attributeTypeIndex = type;
+        return type;
+    }
+
+    type = typeMemberIndex++;
+    stateAttributeTypeMember[ typeMember ] = type;
+    attribute._attributeTypeIndex = type;
+    return type;
+};
+
+Utils.getOrCreateTextureStateAttributeTypeMemberIndex = function ( attribute ) {
+    if ( attribute._attributeTypeIndex >= 0 ) return attribute._attributeTypeIndex;
+    var typeMember = attribute.getTypeMember();
+    var type = textureStateAttributeTypeMember[ typeMember ];
+    if ( type !== undefined ) {
+        attribute._attributeTypeIndex = type;
+        return type;
+    }
+    type = textureTypeMemberIndex++;
+    textureStateAttributeTypeMember[ typeMember ] = type;
+    attribute._attributeTypeIndex = type;
+    return type;
+};
+
+Utils.getIdFromTypeMember = function ( typeMember ) {
+    return stateAttributeTypeMember[ typeMember ];
+};
+
+Utils.getTextureIdFromTypeMember = function ( typeMember ) {
+    return textureStateAttributeTypeMember[ typeMember ];
+};
+
+
 Utils.Float32Array = typeof Float32Array !== 'undefined' ? Float32Array : null;
 Utils.Int32Array = typeof Int32Array !== 'undefined' ? Int32Array : null;
 Utils.Uint8Array = typeof Uint8Array !== 'undefined' ? Uint8Array : null;
