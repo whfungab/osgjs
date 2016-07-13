@@ -89,7 +89,7 @@ Program.flushAllDeletedGLPrograms = function ( gl ) {
 };
 
 /** @lends Program.prototype */
-Program.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( GLObject.prototype, MACROUTILS.objectInherit( StateAttribute.prototype, {
+MACROUTILS.createPrototypeStateAttribute( Program, MACROUTILS.objectInherit( GLObject.prototype, MACROUTILS.objectInherit( StateAttribute.prototype, {
 
     attributeType: 'Program',
 

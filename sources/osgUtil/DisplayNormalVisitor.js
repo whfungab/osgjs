@@ -23,6 +23,7 @@ var CompilerOffsetNormal = function () {
     Compiler.apply( this, arguments );
     this._isVertexColored = false;
 };
+CompilerOffsetNormal.validAttributeType = Compiler.validAttributeType;
 
 CompilerOffsetNormal.prototype = MACROUTILS.objectInherit( Compiler.prototype, {
     getFragmentShaderName: function () {
@@ -79,6 +80,8 @@ ShaderGeneratorCompilerOffsetNormal.prototype = ShaderGenerator.prototype;
 var CompilerOffsetTangent = function () {
     CompilerOffsetNormal.apply( this, arguments );
 };
+
+CompilerOffsetTangent.validAttributeType = CompilerOffsetNormal.validAttributeType;
 
 CompilerOffsetTangent.prototype = MACROUTILS.objectInherit( CompilerOffsetNormal.prototype, {
     getFragmentShaderName: function () {

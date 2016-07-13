@@ -85,7 +85,19 @@ var Compiler = function ( attributes, textureAttributes, shaderProcessor ) {
     this._customFragmentShader = false;
 };
 
+Compiler.validAttributeType = [
+    'ShadowReceive',
+    'Light',
+    'Material',
+    'Billboard',
+    'Morph',
+    'Skinning',
+    'Texture'
+];
+
 Compiler.prototype = {
+
+    constructor: Compiler,
 
     initAttributes: function () {
         var attributes = this._attributes;
@@ -800,7 +812,7 @@ Compiler.prototype = {
     createShadowTextureInputVarying: function ( shadowTexture, inputs, vertexWorld, tUnit ) {
         var shadowTexSamplerName = 'Texture' + tUnit;
 
-        // we declare first this uniform so that the Int one 
+        // we declare first this uniform so that the Int one
         var tex = this.getOrCreateSampler( 'sampler2D', shadowTexSamplerName );
 
         // per texture uniforms

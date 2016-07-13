@@ -225,6 +225,9 @@ Utils.createPrototypeStateAttribute = function ( Constructor, prototype, library
 };
 
 
+Utils.getMaxStateAttributeTypeID = function () {
+    return attributeTypeIndex;
+};
 Utils.getOrCreateStateAttributeTypeId = function ( Constructor ) {
     var attributeTypeName = Constructor.prototype.getType();
 
@@ -236,7 +239,7 @@ Utils.getOrCreateStateAttributeTypeId = function ( Constructor ) {
 };
 
 Utils.getOrCreateStateAttributeTypeMemberIndex = function ( attribute ) {
-    if ( attribute._attributeTypeIndex >= 0 ) return attribute._attributeTypeIndex;
+    if ( attribute._attributeTypeIndex !== undefined ) return attribute._attributeTypeIndex;
     var typeMember = attribute.getTypeMember();
     var type = stateAttributeTypeMember[ typeMember ];
     if ( type !== undefined ) {

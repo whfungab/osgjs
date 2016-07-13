@@ -51,7 +51,7 @@ Light.POINT = 'POINT';
 Light.HEMI = 'HEMI';
 
 Light.uniforms = {};
-Light.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( StateAttribute.prototype, {
+MACROUTILS.createPrototypeStateAttribute( Light, MACROUTILS.objectInherit( StateAttribute.prototype, {
 
     attributeType: 'Light',
 
@@ -343,7 +343,5 @@ Light.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( State
     }
 
 } ), 'osg', 'Light' );
-
-MACROUTILS.setTypeID( Light );
 
 module.exports = Light;

@@ -9,6 +9,12 @@ var CompilerShadowCast = function () {
     this._isLighted = false;
 };
 
+CompilerShadowCast.validAttributeType = [
+    'ShadowCast',
+    'Morph',
+    'Skinning'
+];
+
 CompilerShadowCast.prototype = MACROUTILS.objectInherit( Compiler.prototype, {
     getCompilerName: function () {
         return 'ShadowCast';

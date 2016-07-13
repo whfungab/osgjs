@@ -23,6 +23,9 @@ var CompilerColorGeometry = function () {
     this._isVertexColored = false;
 };
 
+CompilerColorGeometry.validAttributeType = Compiler.validAttributeType;
+
+
 CompilerColorGeometry.prototype = MACROUTILS.objectInherit( Compiler.prototype, {
     getFragmentShaderName: function () {
         return 'CompilerDebugGeometry';
@@ -57,6 +60,8 @@ var CompilerColorSkinning = function () {
     Compiler.apply( this, arguments );
     this._isVertexColored = false;
 };
+
+CompilerColorSkinning.validAttributeType = Compiler.validAttributeType;
 
 CompilerColorSkinning.prototype = MACROUTILS.objectInherit( Compiler.prototype, {
     getFragmentShaderName: function () {
