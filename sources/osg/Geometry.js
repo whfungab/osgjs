@@ -92,7 +92,7 @@ if ( Geometry.enableVAO ) Notify.log( 'enable VAO' );
 
 
 /** @lends Geometry.prototype */
-Geometry.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( Node.prototype, {
+MACROUTILS.createPrototypeNode( Geometry, MACROUTILS.objectInherit( Node.prototype, {
 
     releaseGLObjects: function () {
 
@@ -467,8 +467,5 @@ Geometry.appendVertexAttributeToList = function ( from, to, postfix ) {
     }
 
 };
-
-
-MACROUTILS.setTypeID( Geometry );
 
 module.exports = Geometry;

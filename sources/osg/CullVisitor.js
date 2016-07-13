@@ -75,8 +75,19 @@ var CullVisitor = function () {
 
 };
 
+CullVisitor.registerApplyNodeType = function ( type, apply ) {
+    CullVisitor.prototype.nodeApplyArray[ type ] = apply;
+};
+
+CullVisitor.getApplyNodeType = function ( type ) {
+    return CullVisitor.prototype.nodeApplyArray[ type ];
+};
+
 /** @lends CullVisitor.prototype */
 CullVisitor.prototype = MACROUTILS.objectInherit( CullStack.prototype, MACROUTILS.objectInherit( NodeVisitor.prototype, {
+
+    nodeApplyArray: [],
+
     distance: function ( coord, matrix ) {
         return -( coord[ 0 ] * matrix[ 2 ] + coord[ 1 ] * matrix[ 6 ] + coord[ 2 ] * matrix[ 10 ] + matrix[ 14 ] );
     },
@@ -254,7 +265,7 @@ CullVisitor.prototype = MACROUTILS.objectInherit( CullStack.prototype, MACROUTIL
     },
 
     apply: function ( node ) {
-        this[ node.typeID ]( node );
+        this.nodeApplyArray[ node.nodeTypeID ].call( this, node );
     },
 
     createOrReuseRenderStage: function ( classInstance ) {
@@ -385,7 +396,7 @@ CullVisitor.prototype = MACROUTILS.objectInherit( CullStack.prototype, MACROUTIL
 // Camera cull visitor call
 // ANY CHANGE, any change : double check in rendere Camera code
 // for the first camera
-CullVisitor.prototype[ Camera.typeID ] = function ( camera ) {
+var CameraApply = function ( camera ) {
     this._numCamera++;
 
     var stateset = camera.getStateSet();
@@ -502,7 +513,7 @@ CullVisitor.prototype[ Camera.typeID ] = function ( camera ) {
 };
 
 
-CullVisitor.prototype[ MatrixTransform.typeID ] = function ( node ) {
+var MatrixTransformApply = function ( node ) {
     this._numMatrixTransform++;
 
     // Camera and lights must enlarge node parent bounding boxes for this not to cull
@@ -534,7 +545,7 @@ CullVisitor.prototype[ MatrixTransform.typeID ] = function ( node ) {
     this.popCurrentMask();
 };
 
-CullVisitor.prototype[ Projection.typeID ] = function ( node ) {
+var ProjectionApply = function ( node ) {
     this._numProjection++;
 
     var lastMatrixStack = this.getCurrentProjectionMatrix();
@@ -555,7 +566,7 @@ CullVisitor.prototype[ Projection.typeID ] = function ( node ) {
 // here it's treated as a group node for culling
 // as there's isn't any in osgjs
 // so frustumCulling is done here
-CullVisitor.prototype[ Node.typeID ] = function ( node ) {
+var NodeApply = function ( node ) {
     this._numNode++;
 
     // Camera and lights must enlarge node parent bounding boxes for this not to cull
@@ -577,17 +588,7 @@ CullVisitor.prototype[ Node.typeID ] = function ( node ) {
     this.popCurrentMask();
 };
 
-// same code like MatrixTransform
-CullVisitor.prototype[ AutoTransform.typeID ] = CullVisitor.prototype[ MatrixTransform.typeID ];
-
-// same code like Node
-CullVisitor.prototype[ Lod.typeID ] = CullVisitor.prototype[ Node.typeID ];
-
-// same code like Node
-CullVisitor.prototype[ PagedLOD.typeID ] = CullVisitor.prototype[ Node.typeID ];
-
-
-CullVisitor.prototype[ LightSource.typeID ] = function ( node ) {
+var LightSourceApply = function ( node ) {
     this._numLightSource++;
 
     var stateset = node.getStateSet();
@@ -607,7 +608,7 @@ CullVisitor.prototype[ LightSource.typeID ] = function ( node ) {
     if ( stateset ) this.popStateSet();
 };
 
-CullVisitor.prototype[ Geometry.typeID ] = ( function () {
+var GeometryApply = ( function () {
 
     var tempVec = Vec3.create();
     var loggedOnce = false;
@@ -657,12 +658,20 @@ CullVisitor.prototype[ Geometry.typeID ] = ( function () {
     };
 } )();
 
-CullVisitor.prototype[ Skeleton.typeID ] = CullVisitor.prototype[ MatrixTransform.typeID ];
 
-CullVisitor.prototype[ RigGeometry.typeID ] = CullVisitor.prototype[ Geometry.typeID ];
+CullVisitor.registerApplyNodeType( Node.nodeTypeID, NodeApply );
+CullVisitor.registerApplyNodeType( Camera.nodeTypeID, CameraApply );
+CullVisitor.registerApplyNodeType( MatrixTransform.nodeTypeID, MatrixTransformApply );
+CullVisitor.registerApplyNodeType( Projection.nodeTypeID, ProjectionApply );
+CullVisitor.registerApplyNodeType( Geometry.nodeTypeID, GeometryApply );
+CullVisitor.registerApplyNodeType( Skeleton.nodeTypeID, MatrixTransformApply );
+CullVisitor.registerApplyNodeType( Bone.nodeTypeID, MatrixTransformApply );
+CullVisitor.registerApplyNodeType( AutoTransform.nodeTypeID, MatrixTransformApply );
+CullVisitor.registerApplyNodeType( Lod.nodeTypeID, NodeApply );
+CullVisitor.registerApplyNodeType( LightSource.nodeTypeID, LightSourceApply );
+CullVisitor.registerApplyNodeType( PagedLOD.nodeTypeID, NodeApply );
+CullVisitor.registerApplyNodeType( RigGeometry.nodeTypeID, GeometryApply );
+CullVisitor.registerApplyNodeType( MorphGeometry.nodeTypeID, GeometryApply );
 
-CullVisitor.prototype[ MorphGeometry.typeID ] = CullVisitor.prototype[ Geometry.typeID ];
-
-CullVisitor.prototype[ Bone.typeID ] = CullVisitor.prototype[ MatrixTransform.typeID ];
 
 module.exports = CullVisitor;
