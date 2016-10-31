@@ -11,6 +11,9 @@ var FirstPersonManipulatorHammerController = require( 'osgGA/FirstPersonManipula
 var FirstPersonManipulatorWebVRController = require( 'osgGA/FirstPersonManipulatorWebVRController' );
 var FirstPersonManipulatorStandardMouseKeyboardController = require( 'osgGA/FirstPersonManipulatorStandardMouseKeyboardController' );
 
+var IntersectionVisitor = require( 'osgUtil/IntersectionVisitor' );
+var SphereIntersector = require( 'osgUtil/SphereIntersector' );
+var computeMatrixFromNodePath = require( 'osg/computeMatrixFromNodePath' );
 
 /**
  * Authors:
@@ -51,6 +54,8 @@ FirstPersonManipulator.prototype = MACROUTILS.objectInherit( Manipulator.prototy
         this._forward = new OrbitManipulator.Interpolator( 1 );
         this._side = new OrbitManipulator.Interpolator( 1 );
         this._lookPosition = new OrbitManipulator.Interpolator( 2 );
+
+        this._velocity = vec3.create();
 
         // direct pan interpolator (not based on auto-move)
         this._pan = new OrbitManipulator.Interpolator( 2 );
@@ -214,9 +219,19 @@ FirstPersonManipulator.prototype = MACROUTILS.objectInherit( Manipulator.prototy
             var timeFactor = this._stepFactor * factor * vFov * dt;
             var directFactor = this._stepFactor * factor * vFov * 0.005;
 
+            var oldEye = vec3.clone( this._eye );
+
             this.moveForward( vec[ 0 ] * timeFactor - zoom[ 0 ] * directFactor * 20.0 );
             this.strafe( vec[ 1 ] * timeFactor - pan[ 0 ] * directFactor );
             this.strafeVertical( -pan[ 1 ] * directFactor );
+
+            this.handleCollision( oldEye );
+
+            vec3.copy( oldEye, this._eye );
+            // gravity
+            this._velocity[ 2 ] -= 1.0 * dt;
+            vec3.add( this._eye, this._velocity, this._eye );
+            this.handleCollision( oldEye, true );
 
             if ( this._vrEnable ) {
                 vec3.add( this._eye, this._eye, this._vrTrans );
@@ -226,6 +241,60 @@ FirstPersonManipulator.prototype = MACROUTILS.objectInherit( Manipulator.prototy
         };
     } )(),
 
+    handleCollision: function ( oldEye, gravityResponse ) {
+        var si = new SphereIntersector();
+        var radius = Math.max( this._node.getBound().radius() * 0.1, 2.0 * vec3.distance( oldEye, this._eye ) );
+        si.set( this._eye, radius );
+
+        var iv = new IntersectionVisitor();
+        iv.setIntersector( si );
+        this._node.accept( iv );
+
+        var hits = si.getIntersections();
+        if ( hits.length === 0 )
+            return;
+        vec3.set( this._velocity, 0.0, 0.0, 0.0 );
+
+        hits.sort( function ( a, b ) {
+            return a.ratio - b.ratio;
+        } );
+        var hit = hits[ 0 ];
+
+        var mat = mat4.create();
+        computeMatrixFromNodePath.computeLocalToWorld( hit.nodepath, true, mat );
+
+        var inter = vec3.create();
+        vec3.transformMat4( inter, hit.point, mat );
+
+        // normal matrix
+        mat[ 12 ] = mat[ 13 ] = mat[ 14 ] = 0.0;
+        mat4.invert( mat, mat );
+        mat4.transpose( mat, mat );
+        var offset = vec3.create();
+        vec3.transformMat4( offset, hit.TriangleIntersection.normal, mat );
+        vec3.normalize( offset, offset );
+
+        var dirMove = vec3.create();
+        vec3.sub( dirMove, this._eye, oldEye );
+        vec3.normalize( dirMove, dirMove );
+        var dot = -vec3.dot( dirMove, offset );
+
+        // direct-block of eye position with low degree slope
+        if ( gravityResponse === true && ( dot > 0.9 || dot < 0.0 ) ) {
+            vec3.copy( this._eye, oldEye );
+            return;
+        }
+
+        // check which side of triangle we are in
+        if ( dot < 0.0 )
+            return;
+
+        vec3.sub( offset, this._eye, inter );
+        vec3.normalize( offset, offset );
+
+        vec3.scale( offset, offset, radius );
+        vec3.add( this._eye, inter, offset );
+    },
 
     update: ( function () {
         var tmpTarget = vec3.create();
@@ -255,7 +324,9 @@ FirstPersonManipulator.prototype = MACROUTILS.objectInherit( Manipulator.prototy
     moveForward: ( function () {
         var tmp = vec3.create();
         return function ( distance ) {
-            vec3.normalize( tmp, this._direction );
+            vec3.copy( tmp, this._direction );
+            tmp[ 2 ] = 0.0;
+            vec3.normalize( tmp, tmp );
             vec3.scale( tmp, tmp, distance );
             vec3.add( this._eye, this._eye, tmp );
         };
