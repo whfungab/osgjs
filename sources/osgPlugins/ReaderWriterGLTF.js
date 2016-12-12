@@ -1009,7 +1009,7 @@ GLTFLoader.prototype = {
         currentNode.setName( nodeId );
         mat4.copy( currentNode.getMatrix(), this.loadTransform( glTFNode ) );
 
-        if(glTFNode.jointName)
+        if ( glTFNode.jointName )
             this.registerUpdateCallback( nodeId, currentNode );
 
         // Recurses on children before
@@ -1072,6 +1072,36 @@ GLTFLoader.prototype = {
 
         return Promise.all( promises );
     },
+    //
+    postProcessSkeletons: function () {
+        if ( Object.keys( this._skeletons ).length <= 1 )qd
+            return;
+
+        // if several skeletons, merge them
+        var skeletonKeys = Object.keys( this._skeletons );
+        var mainSkeleton = this._skeletons[ skeletonKeys[ 0 ] ];
+
+        // Works when skeletons are distinct
+        for ( var i = 1; i < skeletonKeys.length; ++i ) {
+            console.log( 'Merging ' + skeletonKeys[ i ] + ' in ' + skeletonKeys[ 0 ] );
+            var numChildren = this._skeletons[ skeletonKeys[ i ] ].getChildren().length;
+            for ( var j = 0; j < numChildren; ++j ) {
+                mainSkeleton.addChild( this._skeletons[ skeletonKeys[ i ] ].getChildren()[ j ] );
+            }
+            this._skeletons[ skeletonKeys[ i ] ].removeChildren();
+        }
+
+        //update invBinds
+        var invmat = mat4.create();
+        var invMainSkeletonWorldMatrix = mainSkeleton.getWorldMatrices()[ 0 ];
+        console.log( invMainSkeletonWorldMatrix );
+
+        var boneKeys = Object.keys( this._bones );
+        for ( i = 0; i < boneKeys.length; ++i ) {
+            var newInvBind = mat4.multiply( mat4.create(), invMainSkeletonWorldMatrix, this._bones[ boneKeys[ i ] ].getInvBindMatrixInSkeletonSpace() );
+            this._bones[ boneKeys[ i ] ].setInvBindMatrixInSkeletonSpace( newInvBind );
+        }
+    },
 
     readNodeURL: function ( files, options ) {
 
@@ -1132,6 +1162,8 @@ GLTFLoader.prototype = {
                 if ( self._basicAnimationManager )
                     root.addUpdateCallback( self._basicAnimationManager );
 
+                // Postprocess skeletons
+                self.postProcessSkeletons();
                 return Promise.all( promises ).then( function () {
 
                     return root;
