@@ -291,9 +291,14 @@
                 var controllers = modelFolder.__controllers;
                 controllers[ controllers.length - 1 ].remove();
                 modelFolder.add( self._config, 'model', self._modelList ).onChange( self.switchModel.bind( self ) );
+
+                if ( Object.keys( self._modelNodeMap ).length > 0 ) {
+                    self._config.model = Object.keys( self._modelNodeMap )[ 0 ];
+                    console.log( 'Autoloading \'', self._config.model, '\'' );
+                    self.switchModel();
+                }
+
             } );
-
-
         },
 
         dragOverEvent: function ( evt ) {
