@@ -492,7 +492,7 @@ GLTFLoader.prototype = {
         return mat;
     },
 
-    preprocessChannel: function ( glTFChannel, glTFAnim ) {
+    preprocessChannel: function ( glTFChannel, glTFAnim, glTFParams ) {
 
         var json = this._loadedFiles.glTF;
         var promisesArray = [];
@@ -500,8 +500,8 @@ GLTFLoader.prototype = {
         var glTFSampler = glTFAnim.samplers[ glTFChannel.sampler ];
 
         // parameters are no longer used in GlTF 1.1 specification, see https://github.com/lexaknyazev/glTF/tree/master-test/specification/1.1#animations
-        var timeAccessor = json.accessors[ glTFSampler.input ];
-        var valueAccessor = json.accessors[ glTFSampler.output ];
+        var timeAccessor = json.accessors[ ( glTFParams ? glTFParams[ glTFSampler.input ] : glTFSampler.input ) ];
+        var valueAccessor = json.accessors[ ( glTFParams ? glTFParams[ glTFSampler.output ] : glTFSampler.output ) ];
 
         var timePromise = this.loadAccessorBuffer( timeAccessor, null );
         var valuePromise = this.loadAccessorBuffer( valueAccessor, null );
@@ -568,8 +568,9 @@ GLTFLoader.prototype = {
             for ( var j = 0; j < glTFAnim.channels.length; ++j ) {
 
                 var glTFChannel = glTFAnim.channels[ j ];
+                var glTFParam = glTFAnim.parameters;
 
-                var osgChannel = this.preprocessChannel( glTFChannel, glTFAnim );
+                var osgChannel = this.preprocessChannel( glTFChannel, glTFAnim, glTFParam );
                 channelsPromiseArray.push( osgChannel );
             }
 
