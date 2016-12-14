@@ -538,6 +538,9 @@ Viewer.prototype = MACROUTILS.objectInherit( View.prototype, {
             return P.reject();
         }
 
+        if ( this._hmd.isPresenting && bool ) return;
+        if ( !this._hmd.isPresenting && !bool ) return;
+
         // reset position/orientation of hmd device
         if ( !this._hmd.capabilities.hasPosition )
             this._hmd.resetPose();
