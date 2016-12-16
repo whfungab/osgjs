@@ -396,7 +396,7 @@ GLTFLoader.prototype = {
 
     },
 
-    registerUpdateCallback: function ( callbackName, node ) {
+    registerUpdateCallback: function ( callbackName, node, glTFNode ) {
 
         var json = this._loadedFiles.glTF;
 
@@ -409,13 +409,18 @@ GLTFLoader.prototype = {
         animationCallback.setName( callbackName );
 
         var translation = vec3.create();
-        mat4.getTranslation( translation, node.getMatrix() );
+        if ( glTFNode.translation && glTFNode.translation.length > 0 )
+            translation.set( glTFNode.translation );
 
         var rotationQuat = quat.create();
-        mat4.getRotation( rotationQuat, node.getMatrix() );
+        if ( glTFNode.rotation && glTFNode.rotation.length > 0 )
+            rotationQuat.set( glTFNode.rotation );
 
         var scale = vec3.create();
-        mat4.getScale( scale, node.getMatrix() );
+        if ( glTFNode.scale && glTFNode.scale.length > 0 )
+            scale.set( glTFNode.scale );
+        else
+            scale.set( [ 1.0, 1.0, 1.0 ] );
 
         animationCallback.getStackedTransforms().push( new StackedTranslate( 'translation', translation ) );
         animationCallback.getStackedTransforms().push( new StackedQuaternion( 'rotation', rotationQuat ) );
@@ -1026,7 +1031,7 @@ GLTFLoader.prototype = {
         mat4.copy( currentNode.getMatrix(), this.loadTransform( glTFNode ) );
 
         if ( glTFNode.jointName )
-            this.registerUpdateCallback( nodeId, currentNode );
+            this.registerUpdateCallback( nodeId, currentNode, glTFNode );
 
         // Recurses on children before
         // processing the current node
@@ -1079,7 +1084,7 @@ GLTFLoader.prototype = {
         // Loads solid animations
         // by adding an update callback
         if ( this._animatedNodes[ nodeId ] && !this._bones[ nodeId ] )
-            this.registerUpdateCallback( nodeId, currentNode );
+            this.registerUpdateCallback( nodeId, currentNode, glTFNode );
 
         if ( !this._skeletons[ nodeId ] )
             root.addChild( currentNode );
