@@ -328,6 +328,7 @@ var CompilerFragment = {
 
         // Varyings
         var vertexWorld = this.getOrCreateVarying( 'vec3', 'vModelVertex' );
+        var normalWorld = this.getOrCreateVarying( 'vec3', 'vModelNormal' );
 
         // asserted we have a shadow we do the shadow node allocation
         // and mult with lighted output
@@ -342,7 +343,7 @@ var CompilerFragment = {
         for ( k = 0; k < shadowTextures.length; k++ ) {
             shadowTexture = shadowTextures[ k ];
             if ( shadowTexture ) {
-                shadowInputs = this.createShadowTextureInputVarying( shadowTexture, shadowInputs, vertexWorld, k );
+                shadowInputs = this.createShadowTextureInputVarying( shadowTexture, shadowInputs, vertexWorld, normalWorld, k );
             }
 
         }
@@ -366,7 +367,7 @@ var CompilerFragment = {
 
     },
 
-    createShadowTextureInputVarying: function ( shadowTexture, inputs, vertexWorld, tUnit ) {
+    createShadowTextureInputVarying: function ( shadowTexture, inputs, vertexWorld, normalWorld, tUnit ) {
         var shadowTexSamplerName = 'Texture' + tUnit;
 
         // we declare first this uniform so that the Int one 
@@ -386,8 +387,8 @@ var CompilerFragment = {
 
         var shadowVarying = {
             vertexWorld: vertexWorld,
-            lightEyeDir: inputsShadow.lightEyeDir,
-            lightNDL: inputsShadow.lightNDL
+            normalWorld: normalWorld,
+            lightEyeDir: inputsShadow.lightEyeDir
         };
         inputsShadow = MACROUTILS.objectMix( inputsShadow, shadowVarying );
         return inputsShadow;
@@ -409,14 +410,13 @@ var CompilerFragment = {
             lightPos = this.createVariable( 'vec3', 'lightEyePos' + lightNum );
         }
         var lightDir = this.createVariable( 'vec3', 'lightEyeDir' + lightNum );
-        var lightNDL = this.createVariable( 'float', 'lightNDL' + lightNum );
+
 
 
         return {
             lighted: lighted,
             lightEyePos: lightPos,
-            lightEyeDir: lightDir,
-            lightNDL: lightNDL
+            lightEyeDir: lightDir
         };
 
     },
@@ -464,7 +464,6 @@ var CompilerFragment = {
                 color: lightedOutput,
                 lightEyePos: inputs.lightEyePos, // spot and point only
                 lightEyeDir: inputs.lightEyeDir,
-                ndl: inputs.lightNDL,
                 lighted: inputs.lighted
             } );
 

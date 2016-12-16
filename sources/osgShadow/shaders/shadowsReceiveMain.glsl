@@ -15,38 +15,80 @@ if (depthRange.x == depthRange.y) {
 }
 
 vec4 shadowVertexEye;
+vec4 shadowNormalEye;
 float shadowReceiverZ = 0.0;
 vec4 shadowVertexProjected;
 vec2 shadowUV;
+float N_Dot_L;
 
 if(!earlyOut) {
+    
+    shadowVertexEye =  shadowViewMatrix *  vec4(vertexWorld, 1.0);
 
-    shadowVertexEye=  shadowViewMatrix *  vec4(vertexWorld, 1.0);
-    shadowReceiverZ=  - shadowVertexEye.z;
-    shadowVertexProjected = shadowProjectionMatrix * shadowVertexEye;
+    vec3 shadowLightDir = vec3(0.0, 0.0, 1.0); // in shadow view light is camera
+    vec4 normalFront = vec4( (gl_FrontFacing ? normalWorld : -normalWorld), 0.0);
+    shadowNormalEye =  shadowViewMatrix * normalFront;
+    N_Dot_L = dot(shadowNormalEye.xyz, shadowLightDir); 
 
-    if (shadowVertexProjected.w < 0.0) {
-        earlyOut = true; // notably behind camera
+    if (N_Dot_L <= 0.0) {
+      shadow = 1.0;
+      earlyOut = true;
     }
-      
-    if (!earlyOut) {
+    
+    if(!earlyOut) {
+        
+#define _NORMAL_OFFSET
+#ifdef _NORMAL_OFFSET
+        
+// http://www.dissidentlogic.com/old/images/NormalOffsetShadows/GDC_Poster_NormalOffset.png        
+        float normalOffsetScale = 1.0  - N_Dot_L;
+
+        //divide by depthRange, scale by boundingbox radius inverse
+        //shadowmap sample is 50
+        //centurion is 1
+         normalOffsetScale = normalOffsetScale * 0.075 * depthRange.y;
+        
+        shadowNormalEye =  shadowViewMatrix *  (normalFront * normalOffsetScale);        
+        shadowVertexProjected = shadowProjectionMatrix * (shadowVertexEye + shadowNormalEye);
+    
+        
+#else
+    
+        shadowVertexProjected = shadowProjectionMatrix * shadowVertexEye;
+    
+#endif
+
+        if (shadowVertexProjected.w < 0.0) {
+            earlyOut = true; // notably behind camera
+        }
+    
+    }
+    
+    
+    
+    if(!earlyOut) {
+       
         shadowUV.xy = shadowVertexProjected.xy / shadowVertexProjected.w;
         shadowUV.xy = shadowUV.xy * 0.5 + 0.5;// mad like
 
         if(any(bvec4 ( shadowUV.x > 1., shadowUV.x < 0., shadowUV.y > 1., shadowUV.y < 0.))) {
             earlyOut = true;// limits of light frustum
         }
-          
+                         
         // most precision near 0, make sure we are near 0 and in [0,1]
+        shadowReceiverZ = - shadowVertexEye.z;        
         shadowReceiverZ =  (shadowReceiverZ - depthRange.x)* depthRange.w;
-
+                
         if(shadowReceiverZ < 0.0) {
             earlyOut = true; // notably behind camera
         }
-          
+        
     }
-      
+     
 }
+    
+
+
 
 
 #if defined( _PCF )
@@ -59,6 +101,20 @@ vec2 shadowBiasPCF = vec2(0.);
 shadowBiasPCF.x = clamp(dFdx(shadowReceiverZ)* shadowMapSize.z, -1.0, 1.0 );
 shadowBiasPCF.y = clamp(dFdy(shadowReceiverZ)* shadowMapSize.w, -1.0, 1.0 );
 
+#ifdef _RECEIVERPLANEDEPTHBIAS
+vec2 biasUV;
+
+vec3 texCoordDY = dFdx(shadowVertexEye.xyz);
+vec3 texCoordDX = dFdy(shadowVertexEye.xyz);
+
+biasUV.x = texCoordDY.y * texCoordDX.z - texCoordDX.y * texCoordDY.z;
+biasUV.y = texCoordDX.x * texCoordDY.z - texCoordDY.x * texCoordDX.z;
+biasUV *= 1.0 / ((texCoordDX.x * texCoordDY.y) - (texCoordDX.y * texCoordDY.x));
+// Static depth biasing to make up for incorrect fractional sampling on the shadow map grid
+float fractionalSamplingError = dot(vec2(1.0, 1.0) * shadowMapSize.zw, abs(biasUV));
+float receiverDepthBias = min(fractionalSamplingError, 0.01);
+#endif
+
 #endif
 #endif
 
@@ -70,6 +126,10 @@ if (earlyOut) return shadow;
 
 // depth bias: fighting shadow acne (depth imprecsion z-fighting)
 float shadowBias = 0.0;
+
+
+
+
 // cosTheta is dot( n, l ), clamped between 0 and 1
 //float shadowBias = 0.005*tan(acos(N_Dot_L));
 // same but 4 cycles instead of 15
